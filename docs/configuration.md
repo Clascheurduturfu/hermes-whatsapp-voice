@@ -24,6 +24,7 @@ Restart the sidecar after a change: the dashboard's **Restart sidecar** button, 
 | `vocabulary` | (empty) | Words transcripts should spell as given, e.g. names; your own name is added automatically |
 | `voice_tools` | memory, skills, web, file reading, Hindsight… | `core_session`: tools the voice uses itself for quick lookups (only those your chat has); real jobs go to your main model |
 | `history_chars` | `30000` | `core_session`: recent chat history given to the voice at call start |
+| `history_tool_notes` | `true` | `core_session`: include short notes of tool calls and results in that history. `false` keeps only what you and the assistant said, so a tool-heavy chat leaves more room for the conversation itself |
 | `live_config` | `{}` | Advanced: any Gemini Live setup field, merged over the defaults (see below) |
 | `ring_timeout_seconds` | `45` | How long an outbound call rings |
 | `max_call_minutes` | `15` | Hard cap per call |

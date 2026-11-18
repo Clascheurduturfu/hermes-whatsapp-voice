@@ -102,6 +102,7 @@ def _serve(ctx) -> None:
         token=env["HWV_TOKEN"],
         voice_tools=str(s["voice_tools"]),
         history_chars=int(s["history_chars"]),
+        history_tool_notes=bool(s["history_tool_notes"]),
         voice_instructions=str(s["voice_instructions"]),
         languages=[c.strip() for c in str(s["languages"]).split(",") if c.strip()],
         vocabulary=[w.strip() for w in str(s["vocabulary"]).split(",") if w.strip()],

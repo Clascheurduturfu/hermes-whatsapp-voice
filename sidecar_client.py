@@ -33,6 +33,7 @@ SETTINGS: dict[str, Any] = {
     "voice_tools": "memory, session_search, skills_list, skill_view, web_search, web_extract, read_file, "
     "search_files, todo_list, hindsight_recall, hindsight_retain, hindsight_reflect",
     "history_chars": 30000,
+    "history_tool_notes": True,
     "vocabulary": "",
     "live_config": {},
     "listen": "127.0.0.1:8796",

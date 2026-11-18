@@ -59,6 +59,27 @@ def test_history_becomes_alternating_gemini_turns_within_budget(cs):
     assert "old question" not in json.dumps(turns), "oldest turns drop first when over budget"
 
 
+def test_history_without_tool_notes_keeps_only_what_was_said(cs):
+    messages = [
+        {"role": "user", "content": "old question"},
+        {"role": "assistant", "content": "old answer"},
+        {"role": "user", "content": "check my disk"},
+        {
+            "role": "assistant",
+            "content": "",
+            "tool_calls": [{"id": "c1", "function": {"name": "terminal", "arguments": '{"command": "df -h"}'}}],
+        },
+        {"role": "tool", "tool_name": "terminal", "tool_call_id": "c1", "content": "x" * 400},
+        {"role": "assistant", "content": "Disk is 39% full."},
+    ]
+    text = json.dumps(cs.history_to_contents(messages, budget=60, tool_notes=False))
+    assert "[used terminal(" not in text and "terminal result" not in text
+    assert "check my disk" in text and "39% full" in text
+    assert "old question" in text, "the budget is not spent on tool notes, so older turns fit"
+    roles = [t["role"] for t in cs.history_to_contents(messages, budget=60, tool_notes=False)]
+    assert roles[0] == "user" and all(a != b for a, b in itertools.pairwise(roles))
+
+
 def test_write_back_keeps_tool_results_next_to_their_calls(cs):
     log = cs.EventLog("call1")
     log.add([

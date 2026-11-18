@@ -75,11 +75,14 @@ def _clip(text: str, limit: int) -> str:
     return text if len(text) <= limit else text[: limit - 1] + "…"
 
 
-def history_to_contents(messages: list[dict], budget: int) -> list[dict]:
+def history_to_contents(messages: list[dict], budget: int, tool_notes: bool = True) -> list[dict]:
     """Hermes conversation rows -> Gemini `clientContent` turns, newest kept within `budget` chars.
 
     Tool calls and results are folded into the model's turns as short notes: the voice model needs
-    to know what happened, not the raw payloads. A compaction summary at the start is kept first.
+    to know what happened, not the raw payloads. With `tool_notes=False` they are left out entirely,
+    so the budget goes to what the owner and the assistant actually said (a tool-heavy chat can
+    otherwise fill the budget with notes from its latest task). A compaction summary at the start
+    is kept first.
     """
     turns: list[tuple[str, str]] = []
     summary = ""
@@ -93,11 +96,11 @@ def history_to_contents(messages: list[dict], budget: int) -> list[dict]:
             turns.append(("user", text.strip()))
         elif role == "assistant":
             parts = [text.strip()] if text and text.strip() else []
-            for call in m.get("tool_calls") or []:
+            for call in (m.get("tool_calls") or []) if tool_notes else []:
                 fn = call.get("function", call)
                 parts.append(f"[used {fn.get('name')}({_clip(fn.get('arguments', ''), 160)})]")
             turns.append(("model", "\n".join(parts)))
-        elif role == "tool":
+        elif role == "tool" and tool_notes:
             turns.append(("model", f"[{m.get('tool_name') or 'tool'} result: {_clip(text, 300)}]"))
     merged: list[list[str]] = []
     for role, text in turns:
@@ -450,7 +453,7 @@ class HermesSession:
             owner_name=owner_name, tools=names, reason=reason, details=details, direction=direction,
             voice_instructions=s.voice_instructions, languages=s.languages,
         )] if p)  # fmt: skip
-        history = history_to_contents(self._history(), s.history_chars)
+        history = history_to_contents(self._history(), s.history_chars, s.history_tool_notes)
         return {
             "session_id": self.session_id,
             "system_instruction": instruction,
@@ -628,12 +631,13 @@ def text_into_call(ctx, event) -> dict | None:
 
 class Service:
     def __init__(self, *, owner: str, token: str, voice_tools: str = "", history_chars: int = 30000,
-                 voice_instructions: str = "", languages: list[str] | None = None,
+                 history_tool_notes: bool = True, voice_instructions: str = "", languages: list[str] | None = None,
                  vocabulary: list[str] | None = None):  # fmt: skip
         self.owner = owner
         self.token = token
         self.voice_tools = voice_tools
         self.history_chars = history_chars
+        self.history_tool_notes = history_tool_notes
         self.voice_instructions = voice_instructions
         self.languages = languages or []
         self.vocabulary = vocabulary or []

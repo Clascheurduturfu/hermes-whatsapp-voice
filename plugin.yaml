@@ -132,6 +132,11 @@ config_schema:
     default: 30000
     label: "Chat history for calls (characters)"
     description: "core_session: how much recent chat history the voice gets at the start of a call."
+  history_tool_notes:
+    type: bool
+    default: true
+    label: "Tool notes in call history"
+    description: "core_session: include short notes of tool calls and results in that history. Off keeps only what you and the assistant said, so a tool-heavy chat leaves more room for the conversation itself."
   vocabulary:
     type: str
     default: ""
